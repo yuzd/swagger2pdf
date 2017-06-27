@@ -548,7 +548,7 @@ function convertToHTML(swaggerJSON) {
         for (var dfn in swaggerJSON.models) {
             // eg: Product (uber)
             html += '<div class="div-container-margin">'; // definitions start
-            html += "<h3>1." + sub1Counter + ". " + dfn + "</h3>";
+            html += "<h3>1." + sub1Counter + ". " + dfn + " 【" + (swaggerJSON.models[dfn].description ||"") +"】"+"</h3>";
             html += "<hr />";
             html += renderDefinition(false, dfn, swaggerJSON.models);
             html += "<br />";
