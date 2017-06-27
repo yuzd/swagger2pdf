@@ -16,6 +16,7 @@ var jsonFile;
 var fileName = "test.html";
 var createFileTitlePage = true;
 var swaggerConverter = {};
+var skipType = {};
 jsonFileList = process.argv.slice(2);
 
 console.dir(jsonFileList);
@@ -473,7 +474,9 @@ function convertToHTML(swaggerJSON) {
         html += "   <tr>";
         html += "       <td class='td-alignment-small'>" + response + "</td>";
         html += "       <td class='td-alignment-std'>" + renderDefinition(false, response, swaggerJSON.models);
-
+        if(swaggerJSON.models[response]){
+            skipType[response] = true;
+        }
 
 // response schema
 //        var hasResponseSchema = false;
@@ -546,6 +549,7 @@ function convertToHTML(swaggerJSON) {
         }
         sub1Counter = 1;
         for (var dfn in swaggerJSON.models) {
+            if(skipType[dfn]) continue;
             // eg: Product (uber)
             html += '<div class="div-container-margin">'; // definitions start
             html += "<h3>1." + sub1Counter + ". " + dfn + " 【" + (swaggerJSON.models[dfn].description ||"") +"】"+"</h3>";
