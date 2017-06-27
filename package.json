@@ -1,0 +1,14 @@
+{
+  "name": "Swagger-to-PDF",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "phantom-html2pdf": "^4.0.0"
+  }
+}
