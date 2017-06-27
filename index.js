@@ -231,7 +231,7 @@ function convertToHTML(swaggerJSON) {
     html += headerSummary(swaggerJSON);
 
     html += "<div style='page-break-after:always'></div>";
-    //html += "&nbsp;&nbsp;<div style='page-break-after:always'><div class='footer'>Generated on: " +genDate +"</div>";
+
 
     html += tableOfContents(swaggerJSON);
     html += "<div style='page-break-after:always'></div>";
@@ -333,6 +333,7 @@ function convertToHTML(swaggerJSON) {
             html += "   </thead>";
 
             html += "   <tbody>";
+            var paramBody = null;
             for (var paramIndex = 0; paramIndex < operation.parameters.length; paramIndex++) {
 
                 var rowStyle = "";
@@ -351,9 +352,8 @@ function convertToHTML(swaggerJSON) {
                 // description
                 var paramDescription = param.description ? param.description : "";
                 if (param.paramType == 'body') {
-
                     paramDescription += swaggerJSON.models[param.type].description;
-
+                    paramBody = param.type;
                 }
                 if (!paramDescription) {
                     paramDescription = "&nbsp;";
@@ -363,12 +363,12 @@ function convertToHTML(swaggerJSON) {
                 // required
                 html += "       <td class='td-alignment-small-no-width'>" + ((typeof param.required !== "undefined") ? (param.required == true ? "Yes" : "No") : "No") + "</td>";
 
-                var  def = " &nbsp;【See <b>" + param.type + "</b> in the <b>Definitions</b> section.】";
+                var def = " &nbsp;【See <b>" + param.type + "</b> at <b>below ↓</b> 】";
                 // type
                 if (param.type == "Array" && param.items != null && param.items.type != null) {
                     if (param.paramType == 'body') {
                         html += "       <td class='td-alignment-small-no-width'>" + "array of " + param.items.type + def + "</td>";
-                    }else{
+                    } else {
 
                         html += "       <td class='td-alignment-small-no-width'>" + "array of " + param.items.type + "</td>";
 
@@ -378,8 +378,8 @@ function convertToHTML(swaggerJSON) {
                 }
                 else {
                     if (param.paramType == 'body') {
-                        html += "       <td class='td-alignment-small-no-width'>" + ((typeof param.type !== "undefined") ? param.type : "") + def+ "</td>";
-                    }else {
+                        html += "       <td class='td-alignment-small-no-width'>" + ((typeof param.type !== "undefined") ? param.type : "") + def + "</td>";
+                    } else {
                         html += "       <td class='td-alignment-small-no-width'>" + ((typeof param.type !== "undefined") ? param.type : "") + "</td>";
                     }
                 }
@@ -402,9 +402,59 @@ function convertToHTML(swaggerJSON) {
                 html += "   </tr>";
 
             }
+
+            if (paramBody) {
+
+                skipType[paramBody] = true;
+                var hasResponseSchema = false;
+                var responseSchemaHTML = "<tr><td></td><td colspan=\"4\">";
+                responseSchemaHTML += "       <table class='table-margin' style='margin-left:-5px!important'>";
+                var responseSchema = swaggerJSON.models[paramBody];
+                //if (!responseSchema1) responseSchema1 = {properties: []};
+                //for (var dfnProps in responseSchema1.properties) {
+                //    if (!responseSchema1.properties[dfnProps]) continue;
+                //    if (!swaggerJSON.models[responseSchema1.properties[dfnProps].type]) {
+                //        continue;
+                //    }
+                //
+                //    var responseSchema = swaggerJSON.models[responseSchema1.properties[dfnProps].type];
+
+
+                if (typeof responseSchema !== "undefined") {
+                    if (typeof responseSchema.type !== "undefined") {
+                        responseSchemaHTML += "   <tr>";
+                        responseSchemaHTML += "       <td style='width:20%'><b>Schema type</b></td>";
+                        responseSchemaHTML += "       <td style='width:80%'>" + responseSchema.type + "</td>";
+                        responseSchemaHTML += "   </tr>";
+                        hasResponseSchema = true;
+                    }
+
+                    // response schema items
+                    var responseSchemaItems = responseSchema.items;
+                    if (typeof responseSchemaItems !== "undefined") {
+                        responseSchemaHTML += "   <tr>";
+                        responseSchemaHTML += "       <td class='td-alignment-small'>&nbsp;</td>";
+                        responseSchemaHTML += "       <td class='td-alignment-std'>" + renderSchemaItems(responseSchemaItems, swaggerJSON.models) + "</td>";
+                        responseSchemaHTML += "   </tr>";
+                        hasResponseSchema = true;
+                    }
+                    else {
+                        responseSchemaHTML += "   <tr>";
+                        responseSchemaHTML += "       <td class='td-alignment-small'>&nbsp;</td>";
+                        responseSchemaHTML += "       <td class='td-alignment-std'>" + renderSchemaItems(responseSchema, swaggerJSON.models) + "</td>";
+                        responseSchemaHTML += "   </tr>";
+                        hasResponseSchema = true;
+                    }
+                }
+
+                //}
+                responseSchemaHTML += "       </table></td></tr>";
+                if (hasResponseSchema) {
+                    html += responseSchemaHTML;
+                }
+            }
             html += "   </tbody>";
             html += "   </table>";
-
         }
         else {
             html += "<p>" + "no parameters" + "</p>";
@@ -474,7 +524,7 @@ function convertToHTML(swaggerJSON) {
         html += "   <tr>";
         html += "       <td class='td-alignment-small'>" + response + "</td>";
         html += "       <td class='td-alignment-std'>" + renderDefinition(false, response, swaggerJSON.models);
-        if(swaggerJSON.models[response]){
+        if (swaggerJSON.models[response]) {
             skipType[response] = true;
         }
 
@@ -549,10 +599,10 @@ function convertToHTML(swaggerJSON) {
         }
         sub1Counter = 1;
         for (var dfn in swaggerJSON.models) {
-            if(skipType[dfn]) continue;
+            if (skipType[dfn]) continue;
             // eg: Product (uber)
             html += '<div class="div-container-margin">'; // definitions start
-            html += "<h3>1." + sub1Counter + ". " + dfn + " 【" + (swaggerJSON.models[dfn].description ||"") +"】"+"</h3>";
+            html += "<h3>1." + sub1Counter + ". " + dfn + " 【" + (swaggerJSON.models[dfn].description || "") + "】" + "</h3>";
             html += "<hr />";
             html += renderDefinition(false, dfn, swaggerJSON.models);
             html += "<br />";
@@ -568,7 +618,7 @@ function convertToHTML(swaggerJSON) {
     if (typeof(swaggerJSON.securityDefinitions !== 'undefined')) {
         html += renderSecurityDefinitions(swaggerJSON.securityDefinitions);
     }
-
+    html += "<div style='page-break-after:always'><div class='footer'>Generated on: " + genDate + " <a href='https://github.com/yuzd/swagger2pdf'>Github开源工具</a></div>";
     html += "</div></div>";
     html += "</body></html>";
     return html;
@@ -721,12 +771,12 @@ function renderSchemaItems(schemaItems, swaggerDefinitions) {
     if (isRef) {
         // eg: #/definitions/Product
         //var items = schemaItems["$ref"].split('/');
-        var dfn = schemaItems.id
-        html += "See <b>" + dfn + "</b> in the <b>Definitions</b> section.";
-        html += "<br />";
-        html += "<br />";
+        //var dfn = schemaItems.id
+        //html += "See <b>" + dfn + "</b> in the <b>Definitions</b> section.";
+        //html += "<br />";
+        //html += "<br />";
 
-        // html += renderDefinition(false, schemaItems.id, swaggerDefinitions)
+        html += renderDefinition(false, schemaItems.id, swaggerDefinitions)
 
     }
     else {
@@ -744,11 +794,11 @@ function renderDefinition(minimal, dfn, swaggerJSONdefinitions) {
     html += "<table class='table-margin'>";
     html += "   <thead>";
     html += "    <tr>";
-    html += "           <th class='th-heading'><b>Name</b></td>";
-    html += "           <th class='th-heading-small'><b>Type</b></td>";
+    html += "           <th class='th-heading'><b>Name</b></th>";
+    html += "           <th class='th-heading-small'><b>Type</b></th>";
     if (!minimal)
-        html += "           <th class='th-heading'><b>Description</b></td>";
-    //html += "           <th class='th-heading'><b>Required</b></td>";
+        html += "           <th class='th-heading'><b>Description</b></th>";
+    //html += "           <th class='th-heading'><b>Required</b></th>";
     html += "       </tr>";
     html += "   </thead>";
 
@@ -764,7 +814,9 @@ function renderDefinition(minimal, dfn, swaggerJSONdefinitions) {
         html += "   <tr style='" + rowStyle + "'>";
         html += "       <td style='width:30%;'>" + dfnProps + "</td>";
         if (swaggerJSONdefinitions[dfn].properties[dfnProps] != null) {
-            html += "       <td style='width:10%;'>" + ((typeof swaggerJSONdefinitions[dfn].properties[dfnProps].type !== "undefined") ? swaggerJSONdefinitions[dfn].properties[dfnProps].type == "Array"?"Array of " +swaggerJSONdefinitions[dfn].properties[dfnProps].items["$ref"]: swaggerJSONdefinitions[dfn].properties[dfnProps].type : "") + "</td>";
+
+
+            html += "       <td style='width:10%;'>" + ((typeof swaggerJSONdefinitions[dfn].properties[dfnProps].type !== "undefined") ? swaggerJSONdefinitions[dfn].properties[dfnProps].type == "Array" ? "Array of " + (swaggerJSONdefinitions[dfn].properties[dfnProps].items["$ref"] || swaggerJSONdefinitions[dfn].properties[dfnProps].items["type"]) : swaggerJSONdefinitions[dfn].properties[dfnProps].type : "") + "</td>";
             if (!minimal) {
                 html += "       <td style='width:30%;'>";
 
@@ -789,10 +841,10 @@ function renderDefinition(minimal, dfn, swaggerJSONdefinitions) {
                 }
                 else {
                     var ex = "";
-                    if(swaggerJSONdefinitions[dfn].properties[dfnProps] && swaggerJSONdefinitions[dfn].properties[dfnProps].type&& swaggerJSONdefinitions[swaggerJSONdefinitions[dfn].properties[dfnProps].type]){
+                    if (swaggerJSONdefinitions[dfn].properties[dfnProps] && swaggerJSONdefinitions[dfn].properties[dfnProps].type && swaggerJSONdefinitions[swaggerJSONdefinitions[dfn].properties[dfnProps].type]) {
                         ex = "【See <b>" + swaggerJSONdefinitions[dfn].properties[dfnProps].type + "</b> in the <b>Definitions</b> section】";
                     }
-                    html += ((typeof swaggerJSONdefinitions[dfn].properties[dfnProps].description !== "undefined") ? swaggerJSONdefinitions[dfn].properties[dfnProps].description +ex : ""+ex);
+                    html += ((typeof swaggerJSONdefinitions[dfn].properties[dfnProps].description !== "undefined") ? swaggerJSONdefinitions[dfn].properties[dfnProps].description + ex : "" + ex);
                 }
 
 
